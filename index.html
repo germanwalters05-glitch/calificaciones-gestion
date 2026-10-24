@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Calificaciones - Gestión Educativa</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { color: #1a365d; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 25px; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 25px; }
+        input { flex: 1; padding: 12px 15px; font-size: 16px; border: 2px solid #cbd5e0; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: #3182ce; }
+        button { background-color: #3182ce; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        button:hover { background-color: #2b6cb0; }
+        .result-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-top: 20px; display: none; }
+        .result-card h3 { margin-top: 0; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+        .label { font-weight: bold; color: #4a5568; }
+        .value { color: #2b6cb0; font-weight: 600; }
+        .error-msg { color: #e53e3e; text-align: center; font-weight: bold; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Gestión Educativa</h2>
+    <div class="subtitle">Licenciatura en Educación Primaria • Periodo 2026-1</div>
+    
+    <div class="search-box">
+        <input type="text" id="matriculaInput" placeholder="Ingresa tu matrícula (ej. 232600890000)">
+        <button onclick="buscarCalificacion()">Consultar</button>
+    </div>
+
+    <div id="errorMsg" class="error-msg">Matrícula no encontrada. Verifica tu número.</div>
+
+    <div id="resultCard" class="result-card">
+        <h3 id="nombreEstudiante"></h3>
+        <div class="data-row"><span class="label">Matrícula:</span> <span class="value" id="resMatricula"></span></div>
+        <div class="data-row"><span class="label">Primer Parcial (Asis / Calif):</span> <span class="value" id="resP1"></span></div>
+        <div class="data-row"><span class="label">Segundo Parcial (Asis / Calif):</span> <span class="value" id="resP2"></span></div>
+        <div class="data-row"><span class="label">Evaluación Global (Asis / Calif):</span> <span class="value" id="resGlobal"></span></div>
+        <div class="data-row" style="border-top: 1px solid #cbd5e0; padding-top: 10px; margin-top: 10px;">
+            <span class="label" style="font-size: 17px; color: #1a365d;">Calificación Final:</span> 
+            <span class="value" id="resFinal" style="font-size: 18px; color: #2f855a;"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const datosAlumnos = [
+        {mat: "232600890000", nombre: "ACUÑA URQUIJO ANA PAULA", p1: "19% / 9", p2: "91% / 10", global: "19% / 9", final: "19"},
+        {mat: "232600900000", nombre: "BACAME GOMEZ KAREL RENE", p1: "100% / 10", p2: "100% / 10", global: "9 / 100%", final: "9"},
+        {mat: "232601080000", nombre: "BADILLA LUGO ISRAEL", p1: "77% / 8", p2: "58% / 5", global: "9 / 70%", final: "5"},
+        {mat: "232600910000", nombre: "CALLES AMPARANO MAYRA ELIZA", p1: "94% / 10", p2: "100% / 10", global: "9 / 97%", final: "9"},
+        {mat: "232600920000", nombre: "COTA JAIME ABIGAIL", p1: "194% / 9", p2: "91% / 10", global: "10 / 93%", final: "10"},
+        {mat: "232600930000", nombre: "ENCINAS MATTY DANIEL EDUARDO", p1: "10% / 88", p2: "100% / 10", global: "10 / 93%", final: "10"},
+        {mat: "232601090000", nombre: "ENRIQUEZ DIAZ KAROL JULIETA", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232600940000", nombre: "GARCIA PEREZ YOLANDA YAMILE", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232600950000", nombre: "GUZMAN QUINTANA GABRIELA GUADALUPE", p1: "94% / 10", p2: "91% / 10", global: "9 / 93%", final: "19"},
+        {mat: "232600960000", nombre: "JUAREZ LOPEZ DAYANA DESIREE", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232600980000", nombre: "LUZANIA IBARRA MICHELLE GUADALUPE", p1: "83% / 7", p2: "91% / 7", global: "7 / 87%", final: "7"},
+        {mat: "232600990000", nombre: "MARTINEZ VALENCIA INGRID SOFÍA", p1: "88% / 9", p2: "83% / 10", global: "19 / 87%", final: "9"},
+        {mat: "232601000000", nombre: "MIRANDA GALLEGO ANA SOFIA", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232601010000", nombre: "NUÑEZ DUARTE YAILYN", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232601020000", nombre: "PARRA URQUIJO GENESIS ABIGAIL", p1: "83% / 10", p2: "100% / 10", global: "10 / 90%", final: "10"},
+        {mat: "232600020000", nombre: "PIÑA VARGAS ANGEL ADAN", p1: "88% / 9", p2: "100% / 10", global: "10 / 93%", final: "10"},
+        {mat: "232601040000", nombre: "ROSALES SANTIAGO SEBASTIAN", p1: "94% / 10", p2: "91% / 10", global: "9 / 93%", final: "19"},
+        {mat: "232601050000", nombre: "SALAZAR RIVERA MIA YAZMIN", p1: "10% / 100", p2: "100% / 10", global: "7 / 100%", final: "8"},
+        {mat: "232601060000", nombre: "TREJO RUIZ ALMA CAROLINA", p1: "100% / 10", p2: "100% / 10", global: "10 / 100%", final: "10"},
+        {mat: "232601070000", nombre: "VASQUEZ MEDINA ADRIANA", p1: "100% / 10", p2: "66% / 10", global: "9 / 87%", final: "9"}
+    ];
+
+    function buscarCalificacion() {
+        const val = document.getElementById('matriculaInput').value.trim();
+        const card = document.getElementById('resultCard');
+        const err = document.getElementById('errorMsg');
+        
+        const alumno = datosAlumnos.find(a => a.mat === val);
+        
+        if (alumno) {
+            err.style.display = 'none';
+            document.getElementById('nombreEstudiante').innerText = alumno.nombre;
+            document.getElementById('resMatricula').innerText = alumno.mat;
+            document.getElementById('resP1').innerText = alumno.p1;
+            document.getElementById('resP2').innerText = alumno.p2;
+            document.getElementById('resGlobal').innerText = alumno.global;
+            document.getElementById('resFinal').innerText = alumno.final;
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+            err.style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>
